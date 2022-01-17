@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Launch tslox",
+            "runtimeExecutable": "node",
+            "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+            "internalConsoleOptions": "openOnSessionStart",
+            "args": ["./src/main.ts", "./test/test.lox"],
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**", 
+                "./node_modules/**"
+            ],
+            
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "env": {
+                "TS_NODE_PROJECT": "tsconfig.json"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
+        }
+    ]
+}
