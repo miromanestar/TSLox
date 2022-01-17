@@ -45,6 +45,10 @@ class Scanner {
                 while (this.peek() != '\n' && !this.isAtEnd())
                     this.advance()
             } : this.addToken(TokenType.SLASH); break;
+            case ' ': break;
+            case '\r': break;
+            case '\t': break;
+            case'\n': this.line++; break;
             default: error(this.line, 'Unexpected character.'); break;
         }
     }
