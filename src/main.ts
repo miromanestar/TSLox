@@ -5,7 +5,7 @@ import * as readline from 'readline'
 import { Token } from './types'
 import Scanner from './scanner'
 
-let hadError: Boolean = false
+var hadError: Boolean = false
 
 
 const logReport = (line: number, where: string, msg: string): void => {
