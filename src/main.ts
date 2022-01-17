@@ -2,6 +2,7 @@ import { argv } from 'process'
 import { readFileSync } from 'fs'
 import * as readline from 'readline'
 
+import Colors from './colors'
 import { Token } from './types'
 import Scanner from './scanner'
 
@@ -9,7 +10,7 @@ var hadError: Boolean = false
 
 
 const logReport = (line: number, where: string, msg: string): void => {
-    console.error(`[Line ${ line }] Error ${ where }: ${ msg }`)
+    console.error(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
     hadError = true
 }
 

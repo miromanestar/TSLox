@@ -1,6 +1,25 @@
 import { Token, TokenType } from './types'
 import { error } from './main'
 
+const keywords: Map<string, TokenType> = new Map([
+    ['and', TokenType.AND],
+    ['class', TokenType.CLASS],
+    ['else', TokenType.ELSE],
+    ['false', TokenType.FALSE],
+    ['for', TokenType.FOR],
+    ['fun', TokenType.FUN],
+    ['if', TokenType.IF],
+    ['nil', TokenType.NIL],
+    ['or', TokenType.OR],
+    ['print', TokenType.PRINT],
+    ['return', TokenType.RETURN],
+    ['super', TokenType.SUPER],
+    ['this', TokenType.THIS],
+    ['true', TokenType.TRUE],
+    ['var', TokenType.VAR],
+    ['while', TokenType.WHILE],
+])
+
 class Scanner {
     src: string //Contains the source code of the file being run
     
@@ -49,7 +68,15 @@ class Scanner {
             case '\r': break;
             case '\t': break;
             case'\n': this.line++; break;
-            default: error(this.line, 'Unexpected character.'); break;
+            case '"': this.string(); break;
+            case 'o': this.match('r') && this.addToken(TokenType.OR); break;
+            default:
+                if (this.isDigit(c))
+                    this.number()
+                else if (this.isAlpha(c))
+                    this.identifier()
+                else
+                    error(this.line, 'Unexpected character.')
         }
     }
 
@@ -71,10 +98,10 @@ class Scanner {
         return this.src.charAt(this.current++)
     }
 
-    private peek = () => {
-        if (this.isAtEnd())
+    private peek = (dist: number = 0) => {
+        if (this.isAtEnd() || this.current + dist >= this.src.length)
             return '\0'
-        return this.src.charAt(this.current)
+        return this.src.charAt(this.current + dist)
     }
 
     private match = (expected: string): boolean => {
@@ -83,6 +110,61 @@ class Scanner {
         
         this.current++
         return true
+    }
+
+    private string = (): void => {
+        while (this.peek() !== '"' && !this.isAtEnd()) {
+            if (this.peek() === '\n')
+                this.line++
+            this.advance()
+        }
+
+        if (this.isAtEnd()) {
+            error(this.line, 'Unterminated string.')
+            return
+        }
+
+        //Get the closing string character '"'
+        this.advance()
+
+        //Trim the surrounding quotes
+        const value: string = this.src.substring(this.start + 1, this.current - 1)
+        this.addToken(TokenType.STRING, value)
+    }
+
+    private isDigit = (c: string): boolean => {
+        return c >= '0' && c <= '9'
+    }
+
+    private isAlpha = (c: string): boolean => {
+        return (c >= 'a'.toLowerCase() && c <= 'z'.toLowerCase()) || c === '_'
+    }
+
+    private isAlphaNumeric = (c: string): boolean => {
+        return this.isAlpha(c) || this.isDigit(c)
+    }
+
+    private number = (): void => {
+        while (this.isDigit(this.peek()))
+            this.advance()
+
+        if (this.peek() === '.' && this.isDigit(this.peek(1))) {
+            this.advance()
+
+            while (this.isDigit(this.peek()))
+                this.advance()
+        }
+
+        this.addToken(TokenType.NUMBER, parseFloat(this.src.substring(this.start, this.current)))
+    }
+
+    private identifier = (): void => {
+        while (this.isAlphaNumeric(this.peek()))
+            this.advance()
+
+        const text: string = this.src.substring(this.start, this.current)
+        const type: any = keywords.get(text)
+        this.addToken(keywords.has(text) ? type : TokenType.IDENTIFIER)
     }
 }
 
