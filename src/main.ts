@@ -51,7 +51,7 @@ const repl = async (): Promise<void> => {
     })
 
     const replLoop = () => {
-        rl.question('FUCK> ', res => {
+        rl.question('> ', res => {
             if (!res)
                 process.exit(1)
 
