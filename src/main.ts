@@ -6,7 +6,7 @@ import Colors from './colors'
 import { Token } from './types'
 import Scanner from './scanner'
 
-var hadError: Boolean = false
+let hadError: Boolean = false
 
 
 const logReport = (line: number, where: string, msg: string): void => {
