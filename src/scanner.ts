@@ -1,5 +1,5 @@
 import { Token, TokenType } from './types'
-import { error } from './main'
+import { error } from './lox'
 
 const keywords: Map<string, TokenType> = new Map([
     ['and', TokenType.AND],
@@ -21,8 +21,7 @@ const keywords: Map<string, TokenType> = new Map([
 ])
 
 class Scanner {
-    src: string //Contains the source code of the file being run
-    
+    private src: string
     private tokens: Token[] = []
     private start: number = 0
     private current: number = 0
