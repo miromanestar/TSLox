@@ -7,7 +7,7 @@ interface Visitor<R> {
     visitUnaryExpr(expr: Unary): R
 }
 
-abstract class Expr {
+export abstract class Expr {
     abstract accept<R>(visitor: Visitor<R>): R
 }
 

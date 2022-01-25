@@ -66,7 +66,7 @@ const defineAst = (path: string, baseName: string) => {
     output += `\n\n${ defineVisitor(baseName) }`
 
     //Generate the base abstract class
-    output += `abstract class ${ baseName } {\n    abstract accept<R>(visitor: Visitor<R>): R\n}\n\n`
+    output += `export abstract class ${ baseName } {\n    abstract accept<R>(visitor: Visitor<R>): R\n}\n\n`
 
     for (const type of expTypes) {
         const className = type.split(':')[0].trim()
