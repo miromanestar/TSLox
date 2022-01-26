@@ -1,6 +1,6 @@
-import { match } from 'assert'
 import { Expr, Binary, Unary, Literal, Grouping } from './expressions'
 import { Token, TokenType } from './types'
+import { parseError } from './lox'
 
 class Parser {
     private tokens: Token[] = []
@@ -8,6 +8,14 @@ class Parser {
 
     constructor(tokens: Token[]) {
         this.tokens = tokens
+    }
+
+    public parse = (): Expr => {
+        try {
+            return this.expression()
+        } catch (error)  {
+            return new Literal(null)
+        }
     }
 
     private expression = (): Expr => {
@@ -95,8 +103,7 @@ class Parser {
             return new Grouping(expr)
         }
 
-        //Just to make the compiler happy about always returning something
-        return new Literal(null)
+        throw this.error(this.peek(), 'Expect expression.')
     }
 
     private match = (types: TokenType[]): boolean => {
@@ -110,7 +117,12 @@ class Parser {
         return false
     }
 
+    private consume = (type: TokenType, message: string): Token => {
+        if (this.check(type))
+            return this.advance()
 
+        throw this.error(this.peek(), message)
+    }
 
     private check = (type: TokenType): boolean => {
         if (this.isAtEnd())
@@ -137,6 +149,36 @@ class Parser {
     private isAtEnd = (): boolean => {
         return this.peek().type === TokenType.EOF
     }
+
+    private error = (token: Token, message: string): ParseError => {
+        parseError(token, message)
+        return new ParseError()
+    }
+
+    private synchronize = (): void => {
+        this.advance()
+
+        while(!this.isAtEnd()) {
+            if (this.previous().type === TokenType.SEMICOLON)
+                return
+
+            switch(this.peek().type) {
+                case TokenType.CLASS: break;
+                case TokenType.FUN: break;
+                case TokenType.VAR: break;
+                case TokenType.FOR: break;
+                case TokenType.IF: break;
+                case TokenType.WHILE: break;
+                case TokenType.PRINT: break;
+                case TokenType.RETURN: break;
+                    return
+            }
+
+            this.advance()
+        }
+    }
 }
+
+class ParseError extends Error { }
 
 export default Parser

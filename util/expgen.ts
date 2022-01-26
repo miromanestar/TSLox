@@ -45,7 +45,7 @@ const defineType = (baseName: string, className: string, fields: string): string
 }
 
 const defineVisitor = (baseName: string) => {
-    let output: string = `interface Visitor<R> {\n`
+    let output: string = `export interface Visitor<R> {\n`
     
     for (const type of expTypes) {
         const className = type.split(':')[0].trim()
