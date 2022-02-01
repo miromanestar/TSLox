@@ -13,7 +13,7 @@ import RpnPrinter from './rpn_printer'
 
 let hadError: boolean = false
 let hadRuntimeError: boolean = false
-let interpreter = new Interpreter()
+const interpreter = new Interpreter()
 
 
 const logReport = (line: number, where: string, msg: string): void => {
@@ -45,10 +45,10 @@ const run = (src: string): void => {
     const parser = new Parser(tokens)
     const expression: Expr = parser.parse()
 
-    interpreter.interpret(expression)
-
     if (hadError)
         return
+
+    interpreter.interpret(expression)
 
     console.log(new RpnPrinter().printExpr(expression))
 }
