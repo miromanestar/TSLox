@@ -170,8 +170,7 @@ class Parser {
                 case TokenType.IF: break;
                 case TokenType.WHILE: break;
                 case TokenType.PRINT: break;
-                case TokenType.RETURN: break;
-                    return
+                case TokenType.RETURN: return;
             }
 
             this.advance()

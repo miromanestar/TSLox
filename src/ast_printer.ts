@@ -1,5 +1,4 @@
 import * as Expr from "./expressions"
-import { Token, TokenType } from "./types"
 
 class AstPrinter implements Expr.Visitor<string> {
 

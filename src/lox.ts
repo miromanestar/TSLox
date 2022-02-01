@@ -7,13 +7,17 @@ import { Token, TokenType } from './types'
 import { Expr } from './expressions'
 import Scanner from './scanner'
 import Parser from './parser'
+import Interpreter from './interpreter'
 import AstPrinter from './ast_printer'
+import RpnPrinter from './rpn_printer'
 
-let hadError: Boolean = false
+let hadError: boolean = false
+let hadRuntimeError: boolean = false
+let interpreter = new Interpreter()
 
 
 const logReport = (line: number, where: string, msg: string): void => {
-    console.error(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
     hadError = true
 }
 
@@ -28,6 +32,12 @@ const parseError = (token: Token, message: string): void => {
         logReport(token.line, ` at '${ token.lexeme }'`, message)
 }
 
+const runtimeError = (err: any): void => {
+    console.log(`${ Colors.RED }[Runtime] ${ err.message }${ Colors.RESET }
+        \n${ Colors.RED }[Line ${ err.token.line }]${ Colors.RESET }`)
+    hadRuntimeError = true
+}
+
 const run = (src: string): void => {
     const scanner = new Scanner(src)
     const tokens: Token[] = scanner.scanTokens()
@@ -35,10 +45,12 @@ const run = (src: string): void => {
     const parser = new Parser(tokens)
     const expression: Expr = parser.parse()
 
+    interpreter.interpret(expression)
+
     if (hadError)
         return
 
-    console.log(new AstPrinter().printExpr(expression))
+    console.log(new RpnPrinter().printExpr(expression))
 }
 
 const runFile = (path: string): void => {
@@ -50,6 +62,9 @@ const runFile = (path: string): void => {
 
     if (hadError)
         process.exit(65)
+
+    if (hadRuntimeError)
+        process.exit(70)
 }
 
 const repl = async (): Promise<void> => {
@@ -96,5 +111,6 @@ main()
 
 export {
     error,
-    parseError
+    parseError,
+    runtimeError
 }
