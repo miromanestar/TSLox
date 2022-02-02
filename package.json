@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "lox": "ts-node ./src/lox.ts"
+    "lox": "ts-node ./src/lox.ts",
+    "expr": "ts-node ./util/expgen.ts ./src/expressions.ts"
   },
 
   "dependencies": {

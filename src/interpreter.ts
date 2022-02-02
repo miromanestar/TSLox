@@ -4,10 +4,12 @@ import { Token, TokenType } from './types'
 
 class Interpreter implements Expr.Visitor<any> {
 
-    interpret(expression: Expr.Expr): void {
+    interpret(expression: Expr.Expr, printOutput: boolean): void {
         try {
             const value = this.evaluate(expression)
-            console.log(value)
+
+            if (printOutput)
+                console.log(value)
         } catch (e) {
             runtimeError(e)
         }
@@ -31,6 +33,15 @@ class Interpreter implements Expr.Visitor<any> {
         }
     }
 
+    visitTernaryExpr(expr: Expr.Ternary) {
+        const condition = this.evaluate(expr.condition)
+
+        if (this.isTruthy(condition))
+            return this.evaluate(expr.ifTrue)
+        else
+            return this.evaluate(expr.ifFalse)
+    }
+
     visitBinaryExpr(expr: Expr.Binary) {
         const left = this.evaluate(expr.left)
         const right = this.evaluate(expr.right)
@@ -52,16 +63,16 @@ class Interpreter implements Expr.Visitor<any> {
                 this.checkNumberOperands(expr.operator, left, right)
                 return left * right
             case TokenType.GREATER: 
-                this.checkNumberOperands(expr.operator, left, right)
+                this.stringOrNumber(expr.operator, left, right)
                 return left > right
             case TokenType.GREATER_EQUAL:
-                this.checkNumberOperands(expr.operator, left, right)
+                this.stringOrNumber(expr.operator, left, right)
                 return left >= right
             case TokenType.LESS: 
-                this.checkNumberOperands(expr.operator, left, right)
+                this.stringOrNumber(expr.operator, left, right)
                 return left < right
             case TokenType.LESS_EQUAL: 
-                this.checkNumberOperands(expr.operator, left, right)
+                this.stringOrNumber(expr.operator, left, right)
                 return left <= right
             case TokenType.BANG_EQUAL: return !this.isEqual(left, right)
             case TokenType.EQUAL_EQUAL: return this.isEqual(left, right)
@@ -98,6 +109,16 @@ class Interpreter implements Expr.Visitor<any> {
             return
         
         throw new RuntimeError(operator, `Operands must be numbers. ${operator.type} ${left} ${right}`)
+    }
+
+    private stringOrNumber(operator: Token, left: any, right: any): void {
+        if (typeof left === 'string' && typeof right === 'string')
+            return
+
+        if (typeof left === 'number' && typeof right === 'number')
+            return
+        
+        throw new RuntimeError(operator, `Operands must be both strings or numbers. ${operator.type} ${left} ${right}`)
     }
 
     private evaluate(expr: Expr.Expr): any {

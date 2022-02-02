@@ -15,6 +15,10 @@ let hadError: boolean = false
 let hadRuntimeError: boolean = false
 const interpreter = new Interpreter()
 
+let isAst = false
+let isRpn = false
+let printOutput = true
+
 
 const logReport = (line: number, where: string, msg: string): void => {
     console.log(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
@@ -48,9 +52,12 @@ const run = (src: string): void => {
     if (hadError)
         return
 
-    interpreter.interpret(expression)
+    interpreter.interpret(expression, printOutput)
 
-    console.log(new RpnPrinter().printExpr(expression))
+    if (isAst)
+        console.log(new AstPrinter().printExpr(expression))
+    if (isRpn)
+        console.log(new RpnPrinter().printExpr(expression))
 }
 
 const runFile = (path: string): void => {
@@ -96,11 +103,39 @@ const repl = async (): Promise<void> => {
     replLoop()
 }
 
+const help = (): void => {
+    console.log('Usage: lox [path] [ast?] [rpn?] [no-output?]')
+    console.log('\nOptions:')
+    console.log('\tast\t\tPrints the AST')
+    console.log('\trpn\t\tPrints the RPN')
+    console.log('\tno-output\tDoes not print the output')
+}
+
 const main = (): void => {
     const args = argv.slice(2)
 
-    if (args.length > 1)
-        console.log('Usage: main.ts [path]')
+    isAst = args.includes('ast')
+    isRpn = args.includes('rpn')
+    printOutput = !args.includes('no-output')
+    const askedHelp = args.includes('help')
+
+    if (isAst) {
+        const index = args.indexOf('ast')
+        args.splice(index, 1)
+    }
+
+    if (isRpn) {
+        const index = args.indexOf('rpn')
+        args.splice(index, 1)
+    }
+
+    if (!printOutput) {
+        const index = args.indexOf('no-output')
+        args.splice(index, 1)
+    }
+
+    if (askedHelp || args.length > 1)
+        help()
     else if (args.length === 1)
         runFile(args[0])
     else

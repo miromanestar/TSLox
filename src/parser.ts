@@ -1,4 +1,4 @@
-import { Expr, Binary, Unary, Literal, Grouping } from './expressions'
+import { Expr, Binary, Unary, Literal, Grouping, Ternary } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
 
@@ -19,7 +19,7 @@ class Parser {
     }
 
     private expression = (): Expr => {
-        return this.equality()
+        return this.ternary()
     }
 
     private equality = (): Expr => {
@@ -104,6 +104,23 @@ class Parser {
         }
 
         throw this.error(this.peek(), 'Expect expression.')
+    }
+
+    private ternary = (): Expr => {
+        const expr: Expr = this.equality()
+
+        if (this.match([TokenType.QUESTION])) {
+            const isTrue: Expr = this.ternary()
+
+            if (this.match([TokenType.COLON])) {
+                const isFalse: Expr = this.ternary()
+                return new Ternary(expr, isTrue, isFalse)
+            } else {
+                this.error(this.peek(), 'Expect ":" after ternary expression.')
+            }
+        }
+
+        return expr
     }
 
     private match = (types: TokenType[]): boolean => {

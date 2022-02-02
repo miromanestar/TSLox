@@ -29,6 +29,10 @@ class RpnPrinter implements Expr.Visitor<string> {
         }
     }
 
+    visitTernaryExpr(expr: Expr.Ternary): string {
+        return `${expr.condition.accept(this)} ${expr.ifTrue.accept(this)} ${expr.ifFalse.accept(this)} ?`
+    }
+
     private printExprs(name: string, ...exprs: Expr.Expr[]) {
         let output = ''
         for (const expr of exprs) {
