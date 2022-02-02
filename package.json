@@ -1,7 +1,12 @@
 {
+  "scripts": {
+    "lox": "ts-node ./src/lox.ts"
+  },
+
   "dependencies": {
     "typescript": "^4.5.4"
   },
+
   "devDependencies": {
     "@types/node": "^17.0.8",
     "ts-node": "^10.4.0"

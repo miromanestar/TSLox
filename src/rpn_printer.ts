@@ -12,7 +12,7 @@ class RpnPrinter implements Expr.Visitor<string> {
     }
 
     visitGroupingExpr(expr: Expr.Grouping): string {
-        return this.parenthesize('', expr.expression)
+        return this.printExprs('', expr.expression)
     }
 
     visitLiteralExpr(expr: Expr.Literal): string {
@@ -25,11 +25,11 @@ class RpnPrinter implements Expr.Visitor<string> {
         switch (expr.operator.lexeme) {
             case "!": return `${expr.right.accept(this)} not`
             case "-": return `${expr.right.accept(this)} neg`
-            default: return this.parenthesize(expr.operator.lexeme, expr.right)
+            default: return this.printExprs(expr.operator.lexeme, expr.right)
         }
     }
 
-    private parenthesize(name: string, ...exprs: Expr.Expr[]) {
+    private printExprs(name: string, ...exprs: Expr.Expr[]) {
         let output = ''
         for (const expr of exprs) {
             output += `${expr.accept(this)}`
