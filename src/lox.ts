@@ -21,7 +21,7 @@ let printOutput = true
 
 
 const logReport = (line: number, where: string, msg: string): void => {
-    console.log(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
     hadError = true
 }
 
@@ -31,9 +31,9 @@ const error = (line: number, msg: string): void => {
 
 const parseError = (token: Token, message: string): void => {
     if (token.type === TokenType.EOF)
-        logReport(token.line, ` at end '${ token.lexeme }'`, message)
+        logReport(token.line, `at end`, message)
     else
-        logReport(token.line, ` at '${ token.lexeme }'`, message)
+        logReport(token.line, `at '${ token.lexeme }'`, message)
 }
 
 const runtimeError = (err: any): void => {
@@ -88,14 +88,12 @@ const repl = async (): Promise<void> => {
 
     const replLoop = () => {
         rl.question('> ', res => {
-            if (!res)
-                process.exit(1)
-
+            if (res === 'exit')
+                return
+            
             run(res)
 
-            if (hadError)
-                process.exit(65)
-
+            hadError = false
             replLoop()
         })
     }

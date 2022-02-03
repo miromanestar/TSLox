@@ -116,7 +116,7 @@ class Parser {
                 const isFalse: Expr = this.ternary()
                 return new Ternary(expr, isTrue, isFalse)
             } else {
-                this.error(this.peek(), 'Expect ":" after ternary expression.')
+                this.error(this.peek(), "Expect '?' to have matching ':'.");
             }
         }
 
