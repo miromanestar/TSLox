@@ -1,7 +1,8 @@
 {
   "scripts": {
     "lox": "ts-node ./src/lox.ts",
-    "expr": "ts-node ./util/expgen.ts ./src/expressions.ts"
+    "expr": "ts-node ./util/expgen.ts ./src/expressions.ts",
+    "test": "node ./tests/tests.mjs"
   },
 
   "dependencies": {

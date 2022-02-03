@@ -18,10 +18,11 @@ const interpreter = new Interpreter()
 let isAst = false
 let isRpn = false
 let printOutput = true
+let testMode = false
 
 
 const logReport = (line: number, where: string, msg: string): void => {
-    console.log(`${ Colors.RED }[line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
     hadError = true
 }
 
@@ -37,8 +38,7 @@ const parseError = (token: Token, message: string): void => {
 }
 
 const runtimeError = (err: any): void => {
-    console.log(`${ Colors.RED }[Runtime] ${ err.message }${ Colors.RESET }
-        \n${ Colors.RED }[Line ${ err.token.line }]${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[Runtime][Line ${ err.token.line}] ${ err.message }${ Colors.RESET }`)
     hadRuntimeError = true
 }
 
@@ -75,19 +75,19 @@ const runFile = (path: string): void => {
 }
 
 const repl = async (): Promise<void> => {
-    console.log('Starting TSLox REPL')
+    !testMode && console.log('Starting TSLox REPL')
     const rl = readline.createInterface({ 
         input: process.stdin, 
         output: process.stdout 
     })
 
     rl.on('close', () => {
-        console.log('\rExiting TSLox REPL')
+        !testMode && console.log('\rExiting TSLox REPL')
         rl.close()
     })
 
     const replLoop = () => {
-        rl.question('> ', res => {
+        rl.question(`${!testMode && '> '}`, res => {
             if (res === 'exit')
                 return
             
@@ -115,6 +115,7 @@ const main = (): void => {
     isAst = args.includes('ast')
     isRpn = args.includes('rpn')
     printOutput = !args.includes('no-output')
+    testMode = args.includes('test')
     const askedHelp = args.includes('help')
 
     if (isAst) {
@@ -132,9 +133,14 @@ const main = (): void => {
         args.splice(index, 1)
     }
 
+    if (testMode) {
+        const index = args.indexOf('test')
+        args.splice(index, 1)
+    }
+
     if (askedHelp || args.length > 1)
         help()
-    else if (args.length === 1)
+    else if (args.length === 1 && !args[0].includes('rpn'))
         runFile(args[0])
     else
         repl()

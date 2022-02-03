@@ -27,9 +27,13 @@ class Interpreter implements Expr.Visitor<any> {
         const right = this.evaluate(expr.right)
 
         switch (expr.operator.type) {
-            case TokenType.MINUS: return -right
-            case TokenType.BANG: return !this.isTruthy(right)
-            default: throw new Error(`Unknown unary operator ${expr.operator.type}`)
+            case TokenType.MINUS:
+                this.checkNumberOperand(expr.operator, right)
+                return -right
+            case TokenType.BANG: 
+                this.checkNumberOperand(expr.operator, right)
+                return !this.isTruthy(right)
+            default: throw new Error(`Unknown unary operator ${expr.operator.lexeme}`)
         }
     }
 
@@ -55,7 +59,7 @@ class Interpreter implements Expr.Visitor<any> {
                     return left + right
                 if (typeof left === 'number' && typeof right === 'number')
                     return left + right
-                throw new RuntimeError(expr.operator, `Operands must be two numbers or two strings. ${expr.operator.type} ${left} ${right}`)
+                throw new RuntimeError(expr.operator, `Operands must be two numbers or two strings. ${expr.operator.lexeme} ${left} ${right}`)
             case TokenType.SLASH: 
                 this.checkNumberOperands(expr.operator, left, right)
                 return left / right
@@ -76,7 +80,7 @@ class Interpreter implements Expr.Visitor<any> {
                 return left <= right
             case TokenType.BANG_EQUAL: return !this.isEqual(left, right)
             case TokenType.EQUAL_EQUAL: return this.isEqual(left, right)
-            default: throw new Error(`Unknown binary operator ${expr.operator.type}`)
+            default: throw new Error(`Unknown binary operator ${expr.operator.lexeme}`)
         }
     }
 
@@ -101,14 +105,14 @@ class Interpreter implements Expr.Visitor<any> {
         if (typeof operand === 'number')
             return
         
-        throw new RuntimeError(operator, `Operand must be a number. ${operator.type} ${operand}`)
+        throw new RuntimeError(operator, `Operand must be a number. ${operator.lexeme} ${operand}`)
     }
 
     private checkNumberOperands(operator: Token, left: any, right: any): void {
         if (typeof left === 'number' && typeof right === 'number')
             return
         
-        throw new RuntimeError(operator, `Operands must be numbers. ${operator.type} ${left} ${right}`)
+        throw new RuntimeError(operator, `Operands must be numbers. ${operator.lexeme} ${left} ${right}`)
     }
 
     private stringOrNumber(operator: Token, left: any, right: any): void {
@@ -118,7 +122,7 @@ class Interpreter implements Expr.Visitor<any> {
         if (typeof left === 'number' && typeof right === 'number')
             return
         
-        throw new RuntimeError(operator, `Operands must be both strings or numbers. ${operator.type} ${left} ${right}`)
+        throw new RuntimeError(operator, `Operands must be both strings or numbers. ${operator.lexeme} ${left} ${right}`)
     }
 
     private evaluate(expr: Expr.Expr): any {
