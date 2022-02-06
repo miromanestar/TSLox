@@ -31,7 +31,6 @@ class Interpreter implements Expr.Visitor<any> {
                 this.checkNumberOperand(expr.operator, right)
                 return -right
             case TokenType.BANG: 
-                this.checkNumberOperand(expr.operator, right)
                 return !this.isTruthy(right)
             default: throw new Error(`Unknown unary operator ${expr.operator.lexeme}`)
         }
