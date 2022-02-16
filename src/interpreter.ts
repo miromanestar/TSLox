@@ -153,6 +153,12 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         return null
     }
 
+    public visitAssignExpr(expr: Expr.Assign) {
+        const value = this.evaluate(expr.value)
+        this.env.assign(expr.name, value)
+        return value
+    }
+
     public visitVariableExpr(expr: Expr.Variable) {
         return this.env.get(expr.name)
     }
