@@ -4,12 +4,12 @@ import * as readline from 'readline'
 
 import Colors from './colors'
 import { Token, TokenType } from './types'
-import { Expr } from './expressions'
 import Scanner from './scanner'
 import Parser from './parser'
 import Interpreter from './interpreter'
 import AstPrinter from './ast_printer'
 import RpnPrinter from './rpn_printer'
+import { Stmt } from './statements'
 
 let hadError: boolean = false
 let hadRuntimeError: boolean = false
@@ -17,7 +17,6 @@ const interpreter = new Interpreter()
 
 let isAst = false
 let isRpn = false
-let printOutput = true
 let testMode = false
 
 
@@ -47,17 +46,17 @@ const run = (src: string): void => {
     const tokens: Token[] = scanner.scanTokens()
 
     const parser = new Parser(tokens)
-    const expression: Expr = parser.parse()
+    const statements: Stmt[] = parser.parse()
 
     if (hadError)
         return
 
-    interpreter.interpret(expression, printOutput)
+    interpreter.interpret(statements)
 
-    if (isAst)
-        console.log(new AstPrinter().printExpr(expression))
-    if (isRpn)
-        console.log(new RpnPrinter().printExpr(expression))
+    // if (isAst)
+    //     console.log(new AstPrinter().printExpr(expression))
+    // if (isRpn)
+    //     console.log(new RpnPrinter().printExpr(expression))
 }
 
 const runFile = (path: string): void => {
@@ -114,7 +113,6 @@ const main = (): void => {
 
     isAst = args.includes('ast')
     isRpn = args.includes('rpn')
-    printOutput = !args.includes('no-output')
     testMode = args.includes('test')
     const askedHelp = args.includes('help')
 
@@ -125,11 +123,6 @@ const main = (): void => {
 
     if (isRpn) {
         const index = args.indexOf('rpn')
-        args.splice(index, 1)
-    }
-
-    if (!printOutput) {
-        const index = args.indexOf('no-output')
         args.splice(index, 1)
     }
 

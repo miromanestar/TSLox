@@ -1,15 +1,16 @@
 import * as Expr from './expressions'
+import * as Stmt from './statements'
 import { runtimeError } from './lox'
 import { Token, TokenType } from './types'
+import Environment from './environment'
 
-class Interpreter implements Expr.Visitor<any> {
+class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
+    private env: Environment = new Environment()
 
-    interpret(expression: Expr.Expr, printOutput: boolean): void {
+    interpret(statements: Stmt.Stmt[]): void {
         try {
-            const value = this.evaluate(expression)
-
-            if (printOutput)
-                console.log(value)
+            for (const stmt of statements)
+                this.execute(stmt)
         } catch (e) {
             runtimeError(e)
         }
@@ -126,6 +127,34 @@ class Interpreter implements Expr.Visitor<any> {
 
     private evaluate(expr: Expr.Expr): any {
         return expr.accept(this)
+    }
+
+    private execute(stmt: Stmt.Stmt): void {
+        stmt.accept(this)
+    }
+
+    public visitExpressionStmt(stmt: Stmt.Expression) {
+        this.evaluate(stmt.expression)
+        return null
+    }
+
+    public visitPrintStmt(stmt: Stmt.Print) {
+        const value = this.evaluate(stmt.expression)
+        console.log(value)
+        return null
+    }
+
+    public visitVarStmt(stmt: Stmt.Var) {
+        let value: any = null;
+        if (stmt.initializer !== null)
+            value = this.evaluate(stmt.initializer)
+
+        this.env.define(stmt.name.lexeme, value)
+        return null
+    }
+
+    public visitVariableExpr(expr: Expr.Variable) {
+        return this.env.get(expr.name)
     }
 }
 
