@@ -196,7 +196,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
 
         try {
             while (this.isTruthy(this.evaluate(stmt.condition)))
-            this.execute(stmt.body)
+                this.execute(stmt.body)
         } catch (e) { }
 
         return null
@@ -207,7 +207,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     }
 
     public visitContinueStmt(stmt: Stmt.Continue) {
-        
+    
     }
 
     public visitExitStmt() {
