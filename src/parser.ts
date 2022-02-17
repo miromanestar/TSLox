@@ -1,14 +1,16 @@
 import { Expr, Binary, Unary, Literal, Grouping, Ternary, Variable, Assign } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
-import { Stmt, Print, Expression, Var } from './statements'
+import { Stmt, Block, Print, Expression, Var } from './statements'
 
 class Parser {
     private tokens: Token[] = []
     private current: number = 0
+    private isRepl: boolean | undefined
 
-    constructor(tokens: Token[]) {
+    constructor(tokens: Token[], isRepl?: boolean) {
         this.tokens = tokens
+        this.isRepl = isRepl
     }
 
     public parse = (): Stmt[] => {
@@ -40,8 +42,20 @@ class Parser {
 
         if (this.match([TokenType.PRINT]))
             return this.printStatement()
+        if (this.match([TokenType.LEFT_BRACE]))
+            return new Block(this.block())
 
         return this.expressionStatement()
+    }
+
+    private block = (): Stmt[] => {
+        let statements: Stmt[] = []
+
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd())
+            statements.push(this.declaration())
+
+        this.consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after block.')
+        return statements
     }
 
     private printStatement = (): Stmt => {
@@ -63,6 +77,10 @@ class Parser {
 
     private expressionStatement = (): Stmt => {
         const expr: Expr = this.expression()
+
+        if (this.isRepl)
+            return new Expression(expr)
+
         this.consume(TokenType.SEMICOLON, 'Expect \';\' after expression.')
         return new Expression(expr)
     }

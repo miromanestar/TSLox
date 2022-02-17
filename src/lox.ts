@@ -9,7 +9,7 @@ import Parser from './parser'
 import Interpreter from './interpreter'
 import AstPrinter from './ast_printer'
 import RpnPrinter from './rpn_printer'
-import { Stmt } from './statements'
+import { Expression, Stmt } from './statements'
 
 let hadError: boolean = false
 let hadRuntimeError: boolean = false
@@ -41,23 +41,32 @@ const runtimeError = (err: any): void => {
     hadRuntimeError = true
 }
 
-const run = (src: string): void => {
+const run = (src: string, isRepl?: boolean): void => {
     const scanner = new Scanner(src)
     const tokens: Token[] = scanner.scanTokens()
 
-    const parser = new Parser(tokens)
+    const parser = new Parser(tokens, isRepl)
     const statements: Stmt[] = parser.parse()
 
     if (hadError)
         return
 
     interpreter.interpret(statements)
+    
+    if (statements[0] instanceof Expression && statements.length === 1)
+        console.log(statements[0].expression.accept(interpreter))
+
+    if (!isRepl && !testMode)
+        return
+    
+    if (!hadError && !hadRuntimeError && !isRepl)
+        console.log(`${ Colors.GREEN }No errors.${ Colors.RESET }`)
+}
 
     // if (isAst)
     //     console.log(new AstPrinter().printExpr(expression))
     // if (isRpn)
     //     console.log(new RpnPrinter().printExpr(expression))
-}
 
 const runFile = (path: string): void => {
     const src = readFileSync(path, {
@@ -90,7 +99,7 @@ const repl = async (): Promise<void> => {
             if (res === 'exit')
                 return
             
-            run(res)
+            run(res, true)
 
             hadError = false
             replLoop()

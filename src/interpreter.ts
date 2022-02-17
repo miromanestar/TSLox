@@ -15,7 +15,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
             runtimeError(e)
         }
     }
-
+    
     visitLiteralExpr(expr: Expr.Literal) {
         return expr.value
     }
@@ -131,6 +131,23 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
 
     private execute(stmt: Stmt.Stmt): void {
         stmt.accept(this)
+    }
+
+    private executeBlock(statements: Stmt.Stmt[], env: Environment): void {
+        const previous = this.env
+        
+        try {
+            this.env = env
+            for (const stmt of statements)
+                this.execute(stmt)
+        } finally {
+            this.env = previous
+        }
+    }
+
+    public visitBlockStmt(stmt: Stmt.Block) {
+        this.executeBlock(stmt.statements, new Environment(this.env))
+        return null 
     }
 
     public visitExpressionStmt(stmt: Stmt.Expression) {
