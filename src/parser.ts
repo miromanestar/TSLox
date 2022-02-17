@@ -1,7 +1,7 @@
-import { Expr, Binary, Unary, Literal, Grouping, Ternary, Variable, Assign } from './expressions'
+import { Expr, Binary, Unary, Literal, Grouping, Ternary, Variable, Assign, Logical } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
-import { Stmt, Block, Print, Expression, Var } from './statements'
+import { Stmt, Block, Print, Expression, Var, If, While } from './statements'
 
 class Parser {
     private tokens: Token[] = []
@@ -40,12 +40,78 @@ class Parser {
 
     private statement = (): Stmt => {
 
+        if (this.match([TokenType.FOR]))
+            return this.forStatement()
+        if (this.match([TokenType.IF]))
+            return this.ifStatement()
         if (this.match([TokenType.PRINT]))
             return this.printStatement()
+        if (this.match([TokenType.WHILE]))
+            return this.whileStatement()
         if (this.match([TokenType.LEFT_BRACE]))
             return new Block(this.block())
 
         return this.expressionStatement()
+    }
+
+    private ifStatement = (): Stmt => {
+        this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'if\'.')
+        const condition: Expr = this.expression()
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after \'if\' condition.')
+
+        const thenBranch: Stmt = this.statement()
+        let elseBranch: Stmt = new Expression(new Literal(null))
+        if (this.match([TokenType.ELSE]))
+            elseBranch = this.statement()
+
+        return new If(condition, thenBranch, elseBranch)
+    }
+
+    private whileStatement = (): Stmt => {
+        this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'while\'.')
+        const condition: Expr = this.expression()
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after \'while\' condition.')
+        const body: Stmt = this.statement()
+
+        return new While(condition, body)
+    }
+
+    private forStatement = (): Stmt => {
+        this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'for\'.')
+        
+        let initializer: Stmt | null
+        if (this.match([TokenType.SEMICOLON]))
+            initializer = null
+        else if (this.match([TokenType.VAR]))
+            initializer = this.varDeclaration()
+        else
+            initializer = this.expressionStatement()
+
+        let condition: Expr | null = null
+        if (!this.check(TokenType.SEMICOLON))
+            condition = this.expression()
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after loop condition.')
+
+        let increment: Expr | null = null
+        if (!this.check(TokenType.RIGHT_PAREN))
+            increment = this.expression()
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after for clauses.')
+
+        let body: Stmt = this.statement()
+
+        if (increment) {
+            body = new Block([body, new Expression(increment)])
+        }
+
+        if (!condition)
+            condition = new Literal(true)
+        
+        body = new While(condition, body)
+
+        if (initializer)
+            body = new Block([initializer, body])
+
+        return body
     }
 
     private block = (): Stmt[] => {
@@ -86,7 +152,7 @@ class Parser {
     }
 
     private assignment = (): Expr => {
-        const expr: Expr = this.ternary()
+        const expr: Expr = this.or()
 
         if (this.match([TokenType.EQUAL])) {
             const equals: Token = this.previous()
@@ -98,6 +164,47 @@ class Parser {
             }
 
             throw parseError(equals, 'Invalid assignment target.')
+        }
+
+        return expr
+    }
+
+    private or = (): Expr => {
+        let expr: Expr = this.and()
+
+        while(this.match([TokenType.OR])) {
+            const operator: Token = this.previous()
+            const right: Expr = this.and()
+            expr = new Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private and = (): Expr => {
+        let expr: Expr = this.ternary()
+
+        while(this.match([TokenType.AND])) {
+            const operator: Token = this.previous()
+            const right: Expr = this.ternary()
+            expr = new Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private ternary = (): Expr => {
+        const expr: Expr = this.equality()
+
+        if (this.match([TokenType.QUESTION])) {
+            const isTrue: Expr = this.ternary()
+
+            if (this.match([TokenType.COLON])) {
+                const isFalse: Expr = this.ternary()
+                return new Ternary(expr, isTrue, isFalse)
+            } else {
+                this.error(this.peek(), "Expect '?' to have matching ':'.");
+            }
         }
 
         return expr
@@ -186,23 +293,6 @@ class Parser {
         }
 
         throw this.error(this.peek(), 'Expect expression.')
-    }
-
-    private ternary = (): Expr => {
-        const expr: Expr = this.equality()
-
-        if (this.match([TokenType.QUESTION])) {
-            const isTrue: Expr = this.ternary()
-
-            if (this.match([TokenType.COLON])) {
-                const isFalse: Expr = this.ternary()
-                return new Ternary(expr, isTrue, isFalse)
-            } else {
-                this.error(this.peek(), "Expect '?' to have matching ':'.");
-            }
-        }
-
-        return expr
     }
 
     private match = (types: TokenType[]): boolean => {

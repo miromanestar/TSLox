@@ -15,9 +15,23 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
             runtimeError(e)
         }
     }
-    
+
     visitLiteralExpr(expr: Expr.Literal) {
         return expr.value
+    }
+
+    visitLogicalExpr(expr: Expr.Logical) {
+        const left = this.evaluate(expr.left)
+
+        if (expr.operator.type === TokenType.OR) {
+            if (this.isTruthy(left))
+                return left
+        } else {
+            if (!this.isTruthy(left))
+                return left
+        }
+
+        return this.evaluate(expr.right)
     }
 
     visitGroupingExpr(expr: Expr.Grouping) {
@@ -155,6 +169,14 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         return null
     }
 
+    public visitIfStmt(stmt: Stmt.If) {
+        if (this.isTruthy(this.evaluate(stmt.condition)))
+            this.execute(stmt.thenBranch)
+        else if (stmt.elseBranch)
+            this.execute(stmt.elseBranch)
+        return null
+    }
+
     public visitPrintStmt(stmt: Stmt.Print) {
         const value = this.evaluate(stmt.expression)
         console.log(value)
@@ -167,6 +189,12 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
             value = this.evaluate(stmt.initializer)
 
         this.env.define(stmt.name.lexeme, value)
+        return null
+    }
+
+    public visitWhileStmt(stmt: Stmt.While) {
+        while (this.isTruthy(this.evaluate(stmt.condition)))
+            this.execute(stmt.body)
         return null
     }
 

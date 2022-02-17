@@ -7,8 +7,6 @@ import { Token, TokenType } from './types'
 import Scanner from './scanner'
 import Parser from './parser'
 import Interpreter from './interpreter'
-import AstPrinter from './ast_printer'
-import RpnPrinter from './rpn_printer'
 import { Expression, Stmt } from './statements'
 
 let hadError: boolean = false
@@ -62,11 +60,6 @@ const run = (src: string, isRepl?: boolean): void => {
     if (!hadError && !hadRuntimeError && !isRepl)
         console.log(`${ Colors.GREEN }No errors.${ Colors.RESET }`)
 }
-
-    // if (isAst)
-    //     console.log(new AstPrinter().printExpr(expression))
-    // if (isRpn)
-    //     console.log(new RpnPrinter().printExpr(expression))
 
 const runFile = (path: string): void => {
     const src = readFileSync(path, {
