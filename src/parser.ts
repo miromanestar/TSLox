@@ -1,11 +1,12 @@
 import { Expr, Binary, Unary, Literal, Grouping, Ternary, Variable, Assign, Logical } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
-import { Stmt, Block, Print, Expression, Var, If, While } from './statements'
+import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue } from './statements'
 
 class Parser {
     private tokens: Token[] = []
     private current: number = 0
+    private loopDepth: number = 0
     private isRepl: boolean | undefined
 
     constructor(tokens: Token[], isRepl?: boolean) {
@@ -40,6 +41,12 @@ class Parser {
 
     private statement = (): Stmt => {
 
+        if (this.match([TokenType.BREAK]))
+            return this.breakStatement()
+        if (this.match([TokenType.CONTINUE]))
+            return this.continueStatement()
+        if (this.match([TokenType.EXIT]))
+            return this.exitStatement()
         if (this.match([TokenType.FOR]))
             return this.forStatement()
         if (this.match([TokenType.IF]))
@@ -71,9 +78,15 @@ class Parser {
         this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'while\'.')
         const condition: Expr = this.expression()
         this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after \'while\' condition.')
-        const body: Stmt = this.statement()
+        
+        try {
+            this.loopDepth++
+            const body: Stmt = this.statement()
+            return new While(condition, body)
+        } finally {
+            this.loopDepth--
+        }
 
-        return new While(condition, body)
     }
 
     private forStatement = (): Stmt => {
@@ -97,21 +110,45 @@ class Parser {
             increment = this.expression()
         this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after for clauses.')
 
-        let body: Stmt = this.statement()
+        try {
+            this.loopDepth++
+            let body: Stmt = this.statement()
 
-        if (increment) {
-            body = new Block([body, new Expression(increment)])
+            if (increment) {
+                body = new Block([body, new Expression(increment)])
+            }
+    
+            if (!condition)
+                condition = new Literal(true)
+            
+            body = new While(condition, body)
+    
+            if (initializer)
+                body = new Block([initializer, body])
+    
+            return body
+        } finally {
+            this.loopDepth--
         }
+    }
 
-        if (!condition)
-            condition = new Literal(true)
-        
-        body = new While(condition, body)
+    private breakStatement = (): Stmt => {
+        if (this.loopDepth === 0)
+            parseError(this.peek(), 'Cannot \'break\' outside of a loop.')
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'break\'.')
+        return new Break()
+    }
 
-        if (initializer)
-            body = new Block([initializer, body])
+    private continueStatement = (): Stmt => {
+        if (this.loopDepth === 0)
+            parseError(this.peek(), 'Cannot \'continue\' outside of a loop.')
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'continue\'.')
+        return new Continue()
+    }
 
-        return body
+    private exitStatement = (): Stmt => {
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'exit\'.')
+        return new Exit()
     }
 
     private block = (): Stmt[] => {

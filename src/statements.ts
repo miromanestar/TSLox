@@ -3,6 +3,9 @@ import { Expr } from "./expressions"
 
 export interface Visitor<R> {
     visitBlockStmt(stmt: Block): R
+    visitBreakStmt(stmt: Break): R
+    visitContinueStmt(stmt: Continue): R
+    visitExitStmt(stmt: Exit): R
     visitExpressionStmt(stmt: Expression): R
     visitIfStmt(stmt: If): R
     visitPrintStmt(stmt: Print): R
@@ -24,6 +27,39 @@ export class Block extends Stmt {
 
     accept = <R>(visitor: Visitor<R>): R => {
         return visitor.visitBlockStmt(this)
+    }
+}
+
+export class Break extends Stmt {
+
+    constructor() {
+        super()
+    }
+
+    accept = <R>(visitor: Visitor<R>): R => {
+        return visitor.visitBreakStmt(this)
+    }
+}
+
+export class Continue extends Stmt {
+
+    constructor() {
+        super()
+    }
+
+    accept = <R>(visitor: Visitor<R>): R => {
+        return visitor.visitContinueStmt(this)
+    }
+}
+
+export class Exit extends Stmt {
+
+    constructor() {
+        super()
+    }
+
+    accept = <R>(visitor: Visitor<R>): R => {
+        return visitor.visitExitStmt(this)
     }
 }
 

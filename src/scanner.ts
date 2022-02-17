@@ -3,8 +3,11 @@ import { error } from './lox'
 
 const keywords: Map<string, TokenType> = new Map([
     ['and', TokenType.AND],
+    ['break', TokenType.BREAK],
+    ['continue', TokenType.CONTINUE],
     ['class', TokenType.CLASS],
     ['else', TokenType.ELSE],
+    ['exit', TokenType.EXIT],
     ['false', TokenType.FALSE],
     ['for', TokenType.FOR],
     ['fun', TokenType.FUN],

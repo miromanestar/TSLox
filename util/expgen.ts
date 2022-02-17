@@ -19,6 +19,9 @@ const expTypes = [
 
 const stmtTypes = [
     "Block      : statements: Stmt[]",
+    "Break      : ",
+    "Continue   : ",
+    "Exit       : ",
     "Expression : expression: Expr",
     "If         : condition: Expr, thenBranch: Stmt, elseBranch: Stmt",
     "Print      : expression: Expr",
@@ -33,7 +36,10 @@ const defineType = (baseName: string, className: string, fields: string): string
     output += `export class ${ className } extends ${ baseName } {\n`
 
     //Generate the members of the class
-    const fieldArr: string[] = fields.split(',')
+    let fieldArr: string[] = fields.split(',')
+    if (fieldArr.length === 1 && fieldArr[0].trim() === '')
+        fieldArr = []
+
     fieldArr.forEach(field => {
         const name: string = field.trim().substring(0, field.trim().indexOf(':'))
         const type = field.trim().split(' ')[1]
