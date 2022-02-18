@@ -124,11 +124,13 @@ export class Var extends Stmt {
 export class While extends Stmt {
     readonly condition: Expr
     readonly body: Stmt
+    readonly isFor: boolean
 
-    constructor(condition: Expr, body: Stmt) {
+    constructor(condition: Expr, body: Stmt, isFor: boolean) {
         super()
         this.condition = condition
         this.body = body
+        this.isFor = isFor
     }
 
     accept = <R>(visitor: Visitor<R>): R => {

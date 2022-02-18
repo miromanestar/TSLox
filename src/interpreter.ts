@@ -199,9 +199,15 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
                 this.execute(stmt.body)
         } catch (e) { 
             if (e instanceof ContinueException) {
-                const block = stmt.body as Stmt.Block
-                console.log(block.statements[0], block.statements[1])
-                this.execute(stmt.body)
+
+                //If a for loop, execute the incrementor
+                if (stmt.isFor) {
+                    const block = stmt.body as Stmt.Block
+                    const expr = block.statements[1] as Stmt.Expression
+                    this.execute(expr)
+                }
+
+                this.execute(stmt)
             }
         }
 

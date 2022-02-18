@@ -26,7 +26,7 @@ const stmtTypes = [
     "If         : condition: Expr, thenBranch: Stmt, elseBranch: Stmt",
     "Print      : expression: Expr",
     "Var        : name: Token, initializer: Expr",
-    "While      : condition: Expr, body: Stmt",
+    "While      : condition: Expr, body: Stmt, isFor: boolean",
 ]
 
 const defineType = (baseName: string, className: string, fields: string): string => {

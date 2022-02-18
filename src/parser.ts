@@ -82,7 +82,7 @@ class Parser {
         try {
             this.loopDepth++
             const body: Stmt = this.statement()
-            return new While(condition, body)
+            return new While(condition, body, false)
         } finally {
             this.loopDepth--
         }
@@ -121,7 +121,7 @@ class Parser {
             if (!condition)
                 condition = new Literal(true)
             
-            body = new While(condition, body)
+            body = new While(condition, body, true)
     
             if (initializer)
                 body = new Block([initializer, body])

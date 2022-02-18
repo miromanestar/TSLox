@@ -1,5 +1,5 @@
 var i = 0;
-
+var temp = 0;
 print "Test while";
 while (i < 10) {
 
@@ -7,10 +7,10 @@ while (i < 10) {
       i = 7;
       continue;
     }
+    
+    i = i + 1;
 
     print i;
-
-    i = i + 1;
 }
 
 print "Test for";
