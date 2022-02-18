@@ -7,6 +7,7 @@ class Parser {
     private tokens: Token[] = []
     private current: number = 0
     private loopDepth: number = 0
+    private prevStatement: Stmt | null = null
     private isRepl: boolean | undefined
 
     constructor(tokens: Token[], isRepl?: boolean) {
@@ -17,8 +18,10 @@ class Parser {
     public parse = (): Stmt[] => {
         const statements: Stmt[] = []
 
-        while (!this.isAtEnd())
-            statements.push(this.declaration())
+        while (!this.isAtEnd()) {
+            this.prevStatement = this.declaration()
+            statements.push(this.prevStatement)
+        }
 
         return statements
     }
@@ -53,6 +56,8 @@ class Parser {
             return this.ifStatement()
         if (this.match([TokenType.PRINT]))
             return this.printStatement()
+        if (this.match([TokenType.QUESTION]))
+            return this.ternaryStatement()
         if (this.match([TokenType.WHILE]))
             return this.whileStatement()
         if (this.match([TokenType.LEFT_BRACE]))
@@ -70,6 +75,18 @@ class Parser {
         let elseBranch: Stmt = new Expression(new Literal(null))
         if (this.match([TokenType.ELSE]))
             elseBranch = this.statement()
+
+        return new If(condition, thenBranch, elseBranch)
+    }
+
+    private ternaryStatement = (): Stmt => {
+        if ( !(this.prevStatement instanceof Expression) )
+            this.error(this.peek(), 'Ternary expects expression before \'?\'.')
+
+        const condition: Expr = (this.prevStatement as Expression).expression
+        const thenBranch: Stmt =this.statement()
+        this.consume(TokenType.COLON, 'Expect \':\' after ternary then branch.')
+        const elseBranch: Stmt = this.statement()
 
         return new If(condition, thenBranch, elseBranch)
     }
@@ -218,34 +235,17 @@ class Parser {
     }
 
     private and = (): Expr => {
-        let expr: Expr = this.ternary()
+        let expr: Expr = this.equality()
 
         while(this.match([TokenType.AND])) {
             const operator: Token = this.previous()
-            const right: Expr = this.ternary()
+            const right: Expr = this.equality()
             expr = new Logical(expr, operator, right)
         }
 
         return expr
     }
-
-    private ternary = (): Expr => {
-        const expr: Expr = this.equality()
-
-        if (this.match([TokenType.QUESTION])) {
-            const isTrue: Expr = this.ternary()
-
-            if (this.match([TokenType.COLON])) {
-                const isFalse: Expr = this.ternary()
-                return new Ternary(expr, isTrue, isFalse)
-            } else {
-                this.error(this.peek(), "Expect '?' to have matching ':'.");
-            }
-        }
-
-        return expr
-    }
-
+    
     private equality = (): Expr => {
         let expr: Expr = this.comparison()
 
