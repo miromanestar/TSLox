@@ -1,0 +1,24 @@
+var i = 0;
+
+print "Test while";
+while (i < 10) {
+
+    if (i == 5) {
+      i = 7;
+      continue;
+    }
+
+    print i;
+
+    i = i + 1;
+}
+
+print "Test for";
+for (var i = 0; i < 10; i = i + 1) {
+
+    if (i == 5) {
+      continue;
+    }
+
+    print i;
+}

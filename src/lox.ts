@@ -35,7 +35,7 @@ const parseError = (token: Token, message: string): void => {
 }
 
 const runtimeError = (err: any): void => {
-    console.log(`${ Colors.RED }[Runtime][Line ${ err.token.line}] ${ err.message }${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[Runtime][Line ${ err.token?.line }] ${ err.message }${ Colors.RESET }`)
     hadRuntimeError = true
 }
 

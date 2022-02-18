@@ -197,7 +197,12 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         try {
             while (this.isTruthy(this.evaluate(stmt.condition)))
                 this.execute(stmt.body)
-        } catch (e) { }
+        } catch (e) { 
+            if (e instanceof ContinueException) {
+                console.log(stmt.body)
+                this.execute(stmt.body)
+            }
+        }
 
         return null
     }
@@ -207,7 +212,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     }
 
     public visitContinueStmt(stmt: Stmt.Continue) {
-    
+        throw new ContinueException()
     }
 
     public visitExitStmt() {
@@ -234,7 +239,19 @@ class RuntimeError extends Error {
     }
 }
 
-class BreakException extends Error { }
+class BreakException extends Error { 
+    constructor() {
+        super('break')
+        Object.setPrototypeOf(this, BreakException.prototype)
+    }
+}
+
+class ContinueException extends Error {
+    constructor() {
+        super('continue')
+        Object.setPrototypeOf(this, ContinueException.prototype)
+    }
+ }
 
 export default Interpreter
 export {
