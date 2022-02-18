@@ -180,7 +180,6 @@ class Parser {
 
     private expressionStatement = (): Stmt => {
         const expr: Expr = this.expression()
-
         if (this.isRepl)
             return new Expression(expr)
 
@@ -344,6 +343,10 @@ class Parser {
     }
 
     private consume = (type: TokenType, message: string): Token => {
+        //If there's a statement in repl mode and a statement, disallow not putting semicolons.
+        if (type === TokenType.SEMICOLON)
+            this.isRepl = false
+
         if (this.check(type))
             return this.advance()
 
