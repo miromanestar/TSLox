@@ -1,4 +1,4 @@
-import { Expr, Binary, Unary, Literal, Grouping, Ternary, Variable, Assign, Logical } from './expressions'
+import { Expr, Binary, Unary, Literal, Grouping, Variable, Assign, Logical } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
 import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue, Switch, Case } from './statements'
