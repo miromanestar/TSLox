@@ -4,11 +4,13 @@ import { Expr } from "./expressions"
 export interface Visitor<R> {
     visitBlockStmt(stmt: Block): R
     visitBreakStmt(stmt: Break): R
+    visitCaseStmt(stmt: Case): R
     visitContinueStmt(stmt: Continue): R
     visitExitStmt(stmt: Exit): R
     visitExpressionStmt(stmt: Expression): R
     visitIfStmt(stmt: If): R
     visitPrintStmt(stmt: Print): R
+    visitSwitchStmt(stmt: Switch): R
     visitVarStmt(stmt: Var): R
     visitWhileStmt(stmt: While): R
 }
@@ -38,6 +40,21 @@ export class Break extends Stmt {
 
     accept = <R>(visitor: Visitor<R>): R => {
         return visitor.visitBreakStmt(this)
+    }
+}
+
+export class Case extends Stmt {
+    readonly condition: Expr
+    readonly statement: Stmt
+
+    constructor(condition: Expr, statement: Stmt) {
+        super()
+        this.condition = condition
+        this.statement = statement
+    }
+
+    accept = <R>(visitor: Visitor<R>): R => {
+        return visitor.visitCaseStmt(this)
     }
 }
 
@@ -103,6 +120,23 @@ export class Print extends Stmt {
 
     accept = <R>(visitor: Visitor<R>): R => {
         return visitor.visitPrintStmt(this)
+    }
+}
+
+export class Switch extends Stmt {
+    readonly condition: Expr
+    readonly cases: Case[]
+    readonly defaultCase: Stmt
+
+    constructor(condition: Expr, cases: Case[], defaultCase: Stmt) {
+        super()
+        this.condition = condition
+        this.cases = cases
+        this.defaultCase = defaultCase
+    }
+
+    accept = <R>(visitor: Visitor<R>): R => {
+        return visitor.visitSwitchStmt(this)
     }
 }
 

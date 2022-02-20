@@ -164,6 +164,10 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         return null 
     }
 
+    public visitCaseStmt(stmt: Stmt.Case) {
+        this.execute(stmt)
+    }
+
     public visitExpressionStmt(stmt: Stmt.Expression) {
         this.evaluate(stmt.expression)
         return null
@@ -180,6 +184,20 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     public visitPrintStmt(stmt: Stmt.Print) {
         const value = this.evaluate(stmt.expression)
         console.log(value)
+        return null
+    }
+
+    public visitSwitchStmt(stmt: Stmt.Switch) {
+        for (const c of stmt.cases) {
+            const caseCond = this.evaluate(c.condition)
+            const switchCond = this.evaluate(stmt.condition)
+            if (this.isEqual(caseCond, switchCond)) {
+                this.execute(c.statement)
+                return
+            }
+        }
+
+        this.execute(stmt.defaultCase)
         return null
     }
 

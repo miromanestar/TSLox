@@ -20,11 +20,13 @@ const expTypes = [
 const stmtTypes = [
     "Block      : statements: Stmt[]",
     "Break      : ",
+    "Case       : condition: Expr, statement: Stmt",
     "Continue   : ",
     "Exit       : ",
     "Expression : expression: Expr",
     "If         : condition: Expr, thenBranch: Stmt, elseBranch: Stmt",
     "Print      : expression: Expr",
+    "Switch     : condition: Expr, cases: Case[], defaultCase: Stmt",
     "Var        : name: Token, initializer: Expr",
     "While      : condition: Expr, body: Stmt, isFor: boolean",
 ]
@@ -42,7 +44,7 @@ const defineType = (baseName: string, className: string, fields: string): string
 
     fieldArr.forEach(field => {
         const name: string = field.trim().substring(0, field.trim().indexOf(':'))
-        const type = field.trim().split(' ')[1]
+        const type = field.trim().substring(field.trim().indexOf(':') + 1).trim()
         output += `    readonly ${ name }: ${ type }\n`
     })
 

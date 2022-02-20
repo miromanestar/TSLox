@@ -1,7 +1,7 @@
 import { Expr, Binary, Unary, Literal, Grouping, Ternary, Variable, Assign, Logical } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
-import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue } from './statements'
+import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue, Switch, Case } from './statements'
 
 class Parser {
     private tokens: Token[] = []
@@ -58,6 +58,8 @@ class Parser {
             return this.printStatement()
         if (this.match([TokenType.QUESTION]))
             return this.ternaryStatement()
+        if (this.match([TokenType.SWITCH]))
+            return this.switchStatement()
         if (this.match([TokenType.WHILE]))
             return this.whileStatement()
         if (this.match([TokenType.LEFT_BRACE]))
@@ -89,6 +91,32 @@ class Parser {
         const elseBranch: Stmt = this.statement()
 
         return new If(condition, thenBranch, elseBranch)
+    }
+
+    private switchStatement = (): Stmt => {
+        this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'switch\'.')
+        const condition: Expr = this.expression()
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after \'switch\' condition.')
+
+        this.consume(TokenType.LEFT_BRACE, 'Expect \'{\' after \'switch\' condition.')
+        
+        const cases: Case[] = []
+        let def: Stmt = new Expression(new Literal(null))
+        while (!this.check(TokenType.RIGHT_BRACE)) {
+            if (this.match([TokenType.CASE])) {
+                const expr: Expr = this.expression()
+                this.consume(TokenType.COLON, 'Expect \':\' after case condition.')
+                cases.push(new Case(expr, this.statement()))
+            } else if (this.match([TokenType.DEFAULT])) {
+                this.consume(TokenType.COLON, 'Expect \':\' after \'default\'.')
+                def = this.statement()
+            } else {
+                this.error(this.peek(), 'Expect \'case\' or \'default\' after \'switch\' condition.')
+            }
+        }
+        this.consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after \'switch\' condition.')
+
+        return new Switch(condition, cases, def)
     }
 
     private whileStatement = (): Stmt => {

@@ -4,8 +4,10 @@ import { error } from './lox'
 const keywords: Map<string, TokenType> = new Map([
     ['and', TokenType.AND],
     ['break', TokenType.BREAK],
+    ['case', TokenType.CASE],
     ['continue', TokenType.CONTINUE],
     ['class', TokenType.CLASS],
+    ['default', TokenType.DEFAULT],
     ['else', TokenType.ELSE],
     ['exit', TokenType.EXIT],
     ['false', TokenType.FALSE],
@@ -17,6 +19,7 @@ const keywords: Map<string, TokenType> = new Map([
     ['print', TokenType.PRINT],
     ['return', TokenType.RETURN],
     ['super', TokenType.SUPER],
+    ['switch', TokenType.SWITCH],
     ['this', TokenType.THIS],
     ['true', TokenType.TRUE],
     ['var', TokenType.VAR],
