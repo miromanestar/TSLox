@@ -115,6 +115,13 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         return a === b
     }
 
+    private stringify(value: any): string {
+        if (value === null)
+            return 'nil'
+
+        return value
+    }
+
     private checkNumberOperand(operator: Token, operand: any): void {
         if (typeof operand === 'number')
             return
@@ -182,7 +189,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     }
 
     public visitPrintStmt(stmt: Stmt.Print) {
-        const value = this.evaluate(stmt.expression)
+        const value = this.stringify(this.evaluate(stmt.expression))
         console.log(value)
         return null
     }

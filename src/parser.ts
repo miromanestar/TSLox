@@ -136,7 +136,6 @@ class Parser {
 
     private forStatement = (): Stmt => {
         this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'for\'.')
-        
         let initializer: Stmt | null
         if (this.match([TokenType.SEMICOLON]))
             initializer = null
