@@ -43,7 +43,6 @@ class Parser {
     }
 
     private statement = (): Stmt => {
-
         if (this.match([TokenType.BREAK]))
             return this.breakStatement()
         if (this.match([TokenType.CONTINUE]))
@@ -83,9 +82,9 @@ class Parser {
 
     private ternaryStatement = (): Stmt => {
         if ( !(this.prevStatement instanceof Expression) )
-            this.error(this.peek(), 'Ternary expects expression before \'?\'.')
+            throw this.error(this.peek(), 'Ternary expects expression before \'?\'.')
 
-        const condition: Expr = (this.prevStatement as Expression).expression
+        const condition: Expr = this.prevStatement.expression
         const thenBranch: Stmt =this.statement()
         this.consume(TokenType.COLON, 'Expect \':\' after ternary then branch.')
         const elseBranch: Stmt = this.statement()
@@ -96,25 +95,37 @@ class Parser {
     private switchStatement = (): Stmt => {
         this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'switch\'.')
         const condition: Expr = this.expression()
-        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after \'switch\' condition.')
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after switch target.')
 
-        this.consume(TokenType.LEFT_BRACE, 'Expect \'{\' after \'switch\' condition.')
-        
+        this.consume(TokenType.LEFT_BRACE, 'Expect \'{\' after switch and target.')
+
         const cases: Case[] = []
         let def: Stmt = new Expression(new Literal(null))
-        while (!this.check(TokenType.RIGHT_BRACE)) {
+        let hasDef: boolean = false
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
             if (this.match([TokenType.CASE])) {
+                if (hasDef)
+                    this.error(this.previous(), '\'default\' must be the last branch.')
+                    
                 const expr: Expr = this.expression()
-                this.consume(TokenType.COLON, 'Expect \':\' after case condition.')
+                this.consume(TokenType.COLON, 'Expect \':\' after case expression.')
                 cases.push(new Case(expr, this.statement()))
             } else if (this.match([TokenType.DEFAULT])) {
-                this.consume(TokenType.COLON, 'Expect \':\' after \'default\'.')
-                def = this.statement()
+                if (hasDef) {
+                    this.error(this.previous(), 'Only 1 default branch allowed.')
+                    this.synchronize()
+                } else {
+                    this.consume(TokenType.COLON, 'Expect \':\' after \'default\'.')
+                    def = this.statement()
+                    hasDef = true
+                }
             } else {
-                this.error(this.peek(), 'Expect \'case\' or \'default\' after \'switch\' condition.')
+                this.error(this.peek(), 'Every branch of switch must begin with \'case\' or \'default\'.')
+                this.synchronize()
             }
         }
-        this.consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after \'switch\' condition.')
+
+        this.consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after all cases.')
 
         return new Switch(condition, cases, def)
     }
@@ -136,7 +147,6 @@ class Parser {
 
     private forStatement = (): Stmt => {
         this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'for\'.')
-        
         let initializer: Stmt | null
         if (this.match([TokenType.SEMICOLON]))
             initializer = null
@@ -179,20 +189,20 @@ class Parser {
 
     private breakStatement = (): Stmt => {
         if (this.loopDepth === 0)
-            parseError(this.peek(), 'Cannot \'break\' outside of a loop.')
+            parseError(this.previous(), '\'break\' is only allowed in a loop.')
         this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'break\'.')
         return new Break()
     }
 
     private continueStatement = (): Stmt => {
         if (this.loopDepth === 0)
-            parseError(this.peek(), 'Cannot \'continue\' outside of a loop.')
+            parseError(this.previous(), '\'continue\' is only allowed in a loop.')
         this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'continue\'.')
         return new Continue()
     }
 
     private exitStatement = (): Stmt => {
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'exit\'.')
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after exit.')
         return new Exit()
     }
 
@@ -419,16 +429,25 @@ class Parser {
             if (this.previous().type === TokenType.SEMICOLON)
                 return
 
-            switch(this.peek().type) {
-                case TokenType.CLASS: break;
-                case TokenType.FUN: break;
-                case TokenType.VAR: break;
-                case TokenType.FOR: break;
-                case TokenType.IF: break;
-                case TokenType.WHILE: break;
-                case TokenType.PRINT: break;
-                case TokenType.RETURN: return;
-            }
+            const type = this.peek().type
+            if (type === TokenType.CLASS)
+                break
+            if (type === TokenType.FUN)
+                break
+            if (type === TokenType.VAR)
+                break
+            if (type === TokenType.FOR)
+                break
+            if (type === TokenType.IF)
+                break
+            if (type === TokenType.WHILE)
+                break
+            if (type === TokenType.PRINT)
+                break
+            if (type === TokenType.SWITCH)
+                break
+            if (type === TokenType.RETURN)
+                return
 
             this.advance()
         }

@@ -19,7 +19,7 @@ let testMode = false
 
 
 const logReport = (line: number, where: string, msg: string): void => {
-    console.log(`${ Colors.RED }[Line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[line ${ line }] Error ${ where }: ${ msg }${ Colors.RESET }`)
     hadError = true
 }
 
@@ -35,7 +35,7 @@ const parseError = (token: Token, message: string): void => {
 }
 
 const runtimeError = (err: any): void => {
-    console.log(`${ Colors.RED }[Runtime][Line ${ err.token?.line }] ${ err.message }${ Colors.RESET }`)
+    console.log(`${ Colors.RED }[Runtime][line ${ err.token?.line }] ${ err.message }${ Colors.RESET }`)
     hadRuntimeError = true
 }
 
