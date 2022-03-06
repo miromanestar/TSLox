@@ -67,10 +67,10 @@ class Scanner {
             case '=': this.addToken(this.match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL); break;
             case '<': this.addToken(this.match('=') ? TokenType.LESS_EQUAL : TokenType.LESS); break;
             case '>': this.addToken(this.match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER); break;
-            case '/': this.match('/') ? () => {
+            case '/': this.match('/') ? (() => {
                 while (this.peek() != '\n' && !this.isAtEnd())
                     this.advance()
-            } : this.addToken(TokenType.SLASH); break;
+            })() : this.addToken(TokenType.SLASH); break;
             case ' ': break;
             case '\r': break;
             case '\t': break;
