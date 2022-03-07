@@ -1,7 +1,7 @@
 {
   "scripts": {
     "lox": "ts-node ./src/lox.ts",
-    "test": "node ./tests/tests.mjs",
+    "test": "node ./util/test.mjs ./tests",
     "gen": "ts-node ./util/gen.ts ./src/expressions.ts ./src/statements.ts"
   },
 
