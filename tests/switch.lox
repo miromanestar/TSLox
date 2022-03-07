@@ -1,0 +1,10 @@
+var eight = 8;
+var eight2 = 8;
+switch(eight) {
+  case 1:
+    print("One");
+  case eight2:
+    print("Eight");
+  default:
+      print("Not a number");
+}

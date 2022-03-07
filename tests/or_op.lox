@@ -1,0 +1,6 @@
+if (true or true) { print true; } else { print false; }
+if (true or false) { print true; } else { print false; }
+if (false or true) { print true; } else { print false; }
+if (false or false) { print true; } else { print false; }
+print "hi" or 2;
+print nil or 2;

@@ -1,0 +1,29 @@
+var a = 2;
+if (a == 3){
+    print "No";
+}
+else{
+    if(a == 4){
+        print "No";
+    }
+    else{
+        if(a == 5){
+            print "No";
+        }
+        else{
+            if(a == 6){
+                print "No";
+            }
+            else{
+                if(a == 2){
+                    for(var i = 0; i < a; i = i + 1){
+                        print "Yes";
+                    }
+                }
+                else{
+                    print "No";
+                }
+            }
+        }
+    }
+}
