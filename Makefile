@@ -3,7 +3,7 @@
 
 lox:
 	@npm ci
-	@printf "#!/bin/sh\n npm run --silent lox rpn no-output" > mylox
+	@printf "#!/bin/sh\n npm run --silent lox test" > mylox
 	@chmod +x mylox
 	@echo "Done."
 

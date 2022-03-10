@@ -144,7 +144,7 @@ class Scanner {
     }
 
     private isAlpha = (c: string): boolean => {
-        return (c >= 'a'.toLowerCase() && c <= 'z'.toLowerCase()) || c === '_'
+        return (c.toLowerCase() >= 'a' && c.toLowerCase() <= 'z') || c === '_'
     }
 
     private isAlphaNumeric = (c: string): boolean => {

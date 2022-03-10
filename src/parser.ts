@@ -1,7 +1,7 @@
-import { Expr, Binary, Unary, Literal, Grouping, Variable, Assign, Logical } from './expressions'
+import { Expr, Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
-import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue, Switch, Case } from './statements'
+import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue, Switch, Case , Function} from './statements'
 
 class Parser {
     private tokens: Token[] = []
@@ -32,6 +32,8 @@ class Parser {
 
     private declaration = (): Stmt => {
         try {
+            if (this.match([TokenType.FUN]))
+                return this.function('function')
             if (this.match([TokenType.VAR]))
                 return this.varDeclaration()
             
@@ -235,11 +237,33 @@ class Parser {
 
     private expressionStatement = (): Stmt => {
         const expr: Expr = this.expression()
-        if (this.isRepl)
+
+        if (this.isRepl && this.peek().type !== TokenType.SEMICOLON)
             return new Expression(expr)
 
         this.consume(TokenType.SEMICOLON, 'Expect \';\' after expression.')
         return new Expression(expr)
+    }
+
+    private function(kind: string): Function {
+        const name: Token = this.consume(TokenType.IDENTIFIER, `Expect ${kind} name.`)
+        this.consume(TokenType.LEFT_PAREN, `Expect \'(\' after ${kind} name.`)
+
+        const parameters: Token[] = []
+        if (!this.check(TokenType.RIGHT_PAREN)) {
+            do {
+                if (parameters.length >= 255)
+                    this.error(this.peek(), 'Cannot have more than 255 parameters.')
+                parameters.push(this.consume(TokenType.IDENTIFIER, 'Expect parameter name.'))
+            } while (this.match([TokenType.COMMA]))
+        }
+
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after parameters.')
+
+        this.consume(TokenType.LEFT_BRACE, 'Expect \'{\' before function body.')
+        const body: Stmt[] = this.block()
+
+        return new Function(name, parameters, body)
     }
 
     private assignment = (): Expr => {
@@ -344,7 +368,35 @@ class Parser {
             return new Unary(operator, right)
         }
 
-        return this.primary()
+        return this.call()
+    }
+
+    private call = (): Expr => {
+        let expr: Expr = this.primary()
+
+        while (true) {
+            if (this.match([TokenType.LEFT_PAREN]))
+                expr = this.finishCall(expr)
+            else
+                break
+        }
+
+        return expr
+    }
+
+    private finishCall = (callee: Expr): Expr => {
+        const args: Expr[] = []
+        if (!this.check(TokenType.RIGHT_PAREN)) {
+            do {
+                if (args.length >= 255)
+                    parseError(this.peek(), 'Cannot have more than 255 arguments.')
+                args.push(this.expression())
+            } while (this.match([TokenType.COMMA]))
+        }
+
+        const paren: Token = this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after arguments.')
+
+        return new Call(callee, paren, args)
     }
 
     private primary = (): Expr => {

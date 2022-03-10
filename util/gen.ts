@@ -9,6 +9,7 @@ const dependencies = [
 const expTypes = [
     "Assign   : name: Token, value: Expr",
     "Binary   : left: Expr, operator: Token, right: Expr",
+    "Call     : callee: Expr, paren: Token, args: Expr[]",
     "Grouping : expression: Expr",
     "Literal  : value: unknown",
     "Logical  : left: Expr, operator: Token, right: Expr",
@@ -24,6 +25,7 @@ const stmtTypes = [
     "Continue   : ",
     "Exit       : ",
     "Expression : expression: Expr",
+    "Function  : name: Token, parameters: Token[], body: Stmt[]",
     "If         : condition: Expr, thenBranch: Stmt, elseBranch: Stmt",
     "Print      : expression: Expr",
     "Switch     : condition: Expr, cases: Case[], defaultCase: Stmt",

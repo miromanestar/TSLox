@@ -11,7 +11,8 @@
             "runtimeExecutable": "node",
             "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
             "internalConsoleOptions": "openOnSessionStart",
-            "args": ["./src/main.ts", "./test/test.lox"],
+            "args": ["./src/lox.ts"],
+            "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "skipFiles": [
                 "<node_internals>/**", 

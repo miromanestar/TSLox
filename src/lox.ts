@@ -43,16 +43,22 @@ const run = (src: string, isRepl?: boolean): void => {
     const scanner = new Scanner(src)
     const tokens: Token[] = scanner.scanTokens()
 
+    if (isRepl) {
+        for (const token of tokens) {
+            if (token.type === TokenType.SEMICOLON) {
+                isRepl = false
+                break
+            }
+        }
+    }
+
     const parser = new Parser(tokens, isRepl)
     const statements: Stmt[] = parser.parse()
 
     if (hadError)
         return
 
-    interpreter.interpret(statements)
-    
-    if (statements[0] instanceof Expression && statements.length === 1)
-        console.log(statements[0].expression.accept(interpreter))
+    interpreter.interpret(statements, isRepl)
 
     if (!isRepl && !testMode)
         return

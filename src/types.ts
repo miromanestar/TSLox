@@ -1,3 +1,44 @@
+import Environment from './environment'
+import Interpreter from './interpreter'
+import * as Stmt from './statements'
+
+type LObject = Callable | number | string | boolean | null
+
+abstract class Callable {
+    abstract arity(): number
+    abstract call(interpreter: Interpreter, args: any[]): LObject
+    abstract toString(): string
+}
+
+class LFunction extends Callable {
+    private readonly declaration: Stmt.Function
+    
+    constructor(declaration: Stmt.Function) {
+        super()
+        this.declaration = declaration
+    }
+
+    arity = (): number => this.declaration.parameters.length
+
+    call = (interpreter: Interpreter, args: any[]): LObject => {
+        const environment = new Environment(interpreter.globals)
+        for (let i = 0; i < this.declaration.parameters.length; i++) {
+            environment.define(this.declaration.parameters[i].lexeme, args[i])
+        }
+
+        interpreter.executeBlock(this.declaration.body, environment)
+        return null
+    }
+
+    toString = (): string => `<fn ${this.declaration.name.lexeme}>`
+}
+
+class Clock extends Callable {
+    arity = (): number => 0
+    call = (intrepeter: Interpreter, args: any[]): LObject => Date.now() / 1000
+    toString = (): string => '<native fn \'clock\'>'
+}
+
 class Token {
     type: TokenType
     literal: unknown
@@ -37,5 +78,5 @@ enum TokenType {
 }
 
 export  {
-    Token, TokenType
+    Token, TokenType, Callable, Clock, LFunction, LObject
 }

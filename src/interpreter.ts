@@ -1,14 +1,24 @@
 import * as Expr from './expressions'
 import * as Stmt from './statements'
 import { runtimeError } from './lox'
-import { Token, TokenType } from './types'
+import { Callable, Clock, LFunction, Token, TokenType } from './types'
 import Environment from './environment'
 
 class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
-    private env: Environment = new Environment()
+    globals: Environment = new Environment()
+    private env: Environment = this.globals
 
-    interpret(statements: Stmt.Stmt[]): void {
+    constructor() {
+        this.globals.define('clock', new Clock())
+    }
+
+    interpret(statements: Stmt.Stmt[], isRepl: boolean | undefined): void {
         try {
+            if (isRepl && statements[0] instanceof Stmt.Expression && statements.length === 1) {
+                console.log(this.stringify(this.evaluate(statements[0].expression)))
+                return
+            }
+
             for (const stmt of statements)
                 this.execute(stmt)
         } catch (e) {
@@ -98,6 +108,21 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         }
     }
 
+    visitCallExpr(expr: Expr.Call) {
+        const callee = this.evaluate(expr.callee)
+
+        if ( !(callee instanceof Callable) )
+            throw new RuntimeError(expr.paren, `Can only call functions and classes. ${expr.paren.lexeme} ${callee}`)
+        
+        const args = expr.args.map(arg => this.evaluate(arg))
+        const funct: Callable = callee
+
+        if (funct.arity() !== args.length)
+            throw new RuntimeError(expr.paren, `Expected ${funct.arity()} arguments but got ${args.length}. ${expr.paren.lexeme} ${callee}`)
+
+        return funct.call(this, args)
+    }
+
     private isTruthy(object: any): boolean {
         if (object === null) 
             return false
@@ -119,7 +144,14 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         if (value === null)
             return 'nil'
 
-        return value
+        if (typeof value === 'number') {
+            const text = value.toString()
+            if (text.endsWith('.0'))
+                return text.slice(0, -2)
+            return text
+        }
+
+        return value.toString()
     }
 
     private checkNumberOperand(operator: Token, operand: any): void {
@@ -154,7 +186,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         stmt.accept(this)
     }
 
-    private executeBlock(statements: Stmt.Stmt[], env: Environment): void {
+    public executeBlock(statements: Stmt.Stmt[], env: Environment): void {
         const previous = this.env
         
         try {
@@ -180,6 +212,12 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         return null
     }
 
+    public visitFunctionStmt(stmt: Stmt.Function) {
+        const funct: LFunction = new LFunction(stmt)
+        this.env.define(stmt.name.lexeme, funct)
+        return null
+    }
+
     public visitIfStmt(stmt: Stmt.If) {
         if (this.isTruthy(this.evaluate(stmt.condition)))
             this.execute(stmt.thenBranch)
@@ -191,7 +229,6 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     public visitPrintStmt(stmt: Stmt.Print) {
         const value = this.stringify(this.evaluate(stmt.expression))
         console.log(value)
-        return null
     }
 
     public visitSwitchStmt(stmt: Stmt.Switch) {
