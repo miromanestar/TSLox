@@ -1,5 +1,5 @@
 import Environment from './environment'
-import Interpreter from './interpreter'
+import Interpreter, { ReturnException } from './interpreter'
 import * as Stmt from './statements'
 
 type LObject = Callable | number | string | boolean | null
@@ -12,21 +12,29 @@ abstract class Callable {
 
 class LFunction extends Callable {
     private readonly declaration: Stmt.Function
+    private readonly closure: Environment
     
-    constructor(declaration: Stmt.Function) {
+    constructor(declaration: Stmt.Function, closure: Environment) {
         super()
+        this.closure = closure
         this.declaration = declaration
     }
 
     arity = (): number => this.declaration.parameters.length
 
     call = (interpreter: Interpreter, args: any[]): LObject => {
-        const environment = new Environment(interpreter.globals)
+        const environment = new Environment(this.closure)
         for (let i = 0; i < this.declaration.parameters.length; i++) {
             environment.define(this.declaration.parameters[i].lexeme, args[i])
         }
 
-        interpreter.executeBlock(this.declaration.body, environment)
+        try {
+            interpreter.executeBlock(this.declaration.body, environment)
+        } catch (e) {
+            if (e instanceof ReturnException)
+                return e.value
+        }
+
         return null
     }
 

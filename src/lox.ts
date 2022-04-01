@@ -7,7 +7,8 @@ import { Token, TokenType } from './types'
 import Scanner from './scanner'
 import Parser from './parser'
 import Interpreter from './interpreter'
-import { Expression, Stmt } from './statements'
+import { Stmt } from './statements'
+import Resolver from './resolver'
 
 let hadError: boolean = false
 let hadRuntimeError: boolean = false
@@ -54,6 +55,12 @@ const run = (src: string, isRepl?: boolean): void => {
 
     const parser = new Parser(tokens, isRepl)
     const statements: Stmt[] = parser.parse()
+
+    if (hadError)
+        return
+
+    const resolver = new Resolver(interpreter)
+    resolver.resolve(statements)
 
     if (hadError)
         return

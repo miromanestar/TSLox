@@ -7,6 +7,7 @@ import Environment from './environment'
 class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     globals: Environment = new Environment()
     private env: Environment = this.globals
+    private locals: Map<Expr.Expr, number> = new Map()
 
     constructor() {
         this.globals.define('clock', new Clock())
@@ -111,14 +112,19 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     visitCallExpr(expr: Expr.Call) {
         const callee = this.evaluate(expr.callee)
 
-        if ( !(callee instanceof Callable) )
-            throw new RuntimeError(expr.paren, `Can only call functions and classes. ${expr.paren.lexeme} ${callee}`)
+        if ( !(callee instanceof Callable) ) {
+            throw new RuntimeError(
+                expr.paren, `Can only call functions and classes. ${expr.paren.lexeme} ${callee}
+            `)
+        }
         
         const args = expr.args.map(arg => this.evaluate(arg))
         const funct: Callable = callee
 
         if (funct.arity() !== args.length)
-            throw new RuntimeError(expr.paren, `Expected ${funct.arity()} arguments but got ${args.length}. ${expr.paren.lexeme} ${callee}`)
+            throw new RuntimeError(expr.paren, 
+                `Expected ${funct.arity()} arguments but got ${args.length}. ${expr.paren.lexeme} ${callee}
+            `)
 
         return funct.call(this, args)
     }
@@ -186,6 +192,10 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
         stmt.accept(this)
     }
 
+    public resolve(expr: Expr.Expr, depth: number): void {
+        this.locals.set(expr, depth)
+    }
+
     public executeBlock(statements: Stmt.Stmt[], env: Environment): void {
         const previous = this.env
         
@@ -213,7 +223,7 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     }
 
     public visitFunctionStmt(stmt: Stmt.Function) {
-        const funct: LFunction = new LFunction(stmt)
+        const funct: LFunction = new LFunction(stmt, this.env)
         this.env.define(stmt.name.lexeme, funct)
         return null
     }
@@ -229,6 +239,11 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
     public visitPrintStmt(stmt: Stmt.Print) {
         const value = this.stringify(this.evaluate(stmt.expression))
         console.log(value)
+    }
+
+    public visitReturnStmt(stmt: Stmt.Return) {
+        const value = stmt.value ? this.evaluate(stmt.value) : null
+        throw new ReturnException(value)
     }
 
     public visitSwitchStmt(stmt: Stmt.Switch) {
@@ -290,12 +305,27 @@ class Interpreter implements Expr.Visitor<any>, Stmt.Visitor<any> {
 
     public visitAssignExpr(expr: Expr.Assign) {
         const value = this.evaluate(expr.value)
-        this.env.assign(expr.name, value)
+        
+        const distance: number | undefined = this.locals.get(expr)
+        if (distance)
+            this.env.assignAt(distance, expr.name, value)
+        else
+            this.globals.assign(expr.name, value)
+
         return value
     }
 
     public visitVariableExpr(expr: Expr.Variable) {
-        return this.env.get(expr.name)
+        return this.lookupVariable(expr.name, expr)
+    }
+
+    private lookupVariable(name: Token, expr: Expr.Expr): any {
+        const distance = this.locals.get(expr)
+
+        if (distance)
+            return this.env.getAt(distance, name.lexeme)
+
+        return this.globals.get(name)
     }
 }
 
@@ -322,7 +352,18 @@ class ContinueException extends Error {
     }
  }
 
+class ReturnException extends Error {
+    readonly value: any
+
+    constructor(value: any) {
+        super('return')
+        Object.setPrototypeOf(this, ReturnException.prototype)
+        this.value = value
+    }
+}
+
 export default Interpreter
 export {
-    RuntimeError
+    RuntimeError,
+    ReturnException
 }

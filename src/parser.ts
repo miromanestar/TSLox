@@ -1,7 +1,7 @@
 import { Expr, Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call } from './expressions'
 import { Token, TokenType } from './types'
 import { parseError } from './lox'
-import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue, Switch, Case , Function} from './statements'
+import { Stmt, Block, Print, Expression, Var, If, While, Exit, Break, Continue, Switch, Case , Function, Return} from './statements'
 
 class Parser {
     private tokens: Token[] = []
@@ -55,18 +55,49 @@ class Parser {
             return this.forStatement()
         if (this.match([TokenType.IF]))
             return this.ifStatement()
+        if (this.match([TokenType.LEFT_BRACE]))
+            return new Block(this.block())
         if (this.match([TokenType.PRINT]))
             return this.printStatement()
         if (this.match([TokenType.QUESTION]))
             return this.ternaryStatement()
+        if (this.match([TokenType.RETURN]))
+            return this.returnStatement()
         if (this.match([TokenType.SWITCH]))
             return this.switchStatement()
         if (this.match([TokenType.WHILE]))
             return this.whileStatement()
-        if (this.match([TokenType.LEFT_BRACE]))
-            return new Block(this.block())
 
         return this.expressionStatement()
+    }
+
+    private breakStatement = (): Stmt => {
+        if (this.loopDepth === 0)
+            parseError(this.previous(), '\'break\' is only allowed in a loop.')
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'break\'.')
+        return new Break()
+    }
+
+    private continueStatement = (): Stmt => {
+        if (this.loopDepth === 0)
+            parseError(this.previous(), '\'continue\' is only allowed in a loop.')
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'continue\'.')
+        return new Continue()
+    }
+
+    private exitStatement = (): Stmt => {
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after exit.')
+        return new Exit()
+    }
+
+    private expressionStatement = (): Stmt => {
+        const expr: Expr = this.expression()
+
+        if (this.isRepl && this.peek().type !== TokenType.SEMICOLON)
+            return new Expression(expr)
+
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after expression.')
+        return new Expression(expr)
     }
 
     private ifStatement = (): Stmt => {
@@ -92,6 +123,66 @@ class Parser {
         const elseBranch: Stmt = this.statement()
 
         return new If(condition, thenBranch, elseBranch)
+    }
+
+    private forStatement = (): Stmt => {
+        this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'for\'.')
+        let initializer: Stmt | null
+        if (this.match([TokenType.SEMICOLON]))
+            initializer = null
+        else if (this.match([TokenType.VAR]))
+            initializer = this.varDeclaration()
+        else
+            initializer = this.expressionStatement()
+
+        let condition: Expr | null = null
+        if (!this.check(TokenType.SEMICOLON))
+            condition = this.expression()
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after loop condition.')
+
+        let increment: Expr | null = null
+        if (!this.check(TokenType.RIGHT_PAREN))
+            increment = this.expression()
+        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after for clauses.')
+
+        try {
+            this.loopDepth++
+            let body: Stmt = this.statement()
+
+            if (increment) {
+                body = new Block([body, new Expression(increment)])
+            }
+    
+            if (!condition)
+                condition = new Literal(true)
+            
+            body = new While(condition, body, true)
+    
+            if (initializer)
+                body = new Block([initializer, body])
+    
+            return body
+        } finally {
+            this.loopDepth--
+        }
+    }
+
+    private printStatement = (): Stmt => {
+        const value: Expr = this.expression()
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after value.')
+        return new Print(value)
+    }
+
+    private returnStatement = (): Stmt => {
+        const keyword: Token = this.previous()
+        
+        let value: Expr | null = null
+        if (!this.check(TokenType.SEMICOLON))
+            value = this.expression()
+
+        this.consume(TokenType.SEMICOLON, 'Expect \';\' after return value.')
+
+        return new Return(keyword, value || new Literal(null))
     }
 
     private switchStatement = (): Stmt => {
@@ -147,67 +238,6 @@ class Parser {
 
     }
 
-    private forStatement = (): Stmt => {
-        this.consume(TokenType.LEFT_PAREN, 'Expect \'(\' after \'for\'.')
-        let initializer: Stmt | null
-        if (this.match([TokenType.SEMICOLON]))
-            initializer = null
-        else if (this.match([TokenType.VAR]))
-            initializer = this.varDeclaration()
-        else
-            initializer = this.expressionStatement()
-
-        let condition: Expr | null = null
-        if (!this.check(TokenType.SEMICOLON))
-            condition = this.expression()
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after loop condition.')
-
-        let increment: Expr | null = null
-        if (!this.check(TokenType.RIGHT_PAREN))
-            increment = this.expression()
-        this.consume(TokenType.RIGHT_PAREN, 'Expect \')\' after for clauses.')
-
-        try {
-            this.loopDepth++
-            let body: Stmt = this.statement()
-
-            if (increment) {
-                body = new Block([body, new Expression(increment)])
-            }
-    
-            if (!condition)
-                condition = new Literal(true)
-            
-            body = new While(condition, body, true)
-    
-            if (initializer)
-                body = new Block([initializer, body])
-    
-            return body
-        } finally {
-            this.loopDepth--
-        }
-    }
-
-    private breakStatement = (): Stmt => {
-        if (this.loopDepth === 0)
-            parseError(this.previous(), '\'break\' is only allowed in a loop.')
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'break\'.')
-        return new Break()
-    }
-
-    private continueStatement = (): Stmt => {
-        if (this.loopDepth === 0)
-            parseError(this.previous(), '\'continue\' is only allowed in a loop.')
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after \'continue\'.')
-        return new Continue()
-    }
-
-    private exitStatement = (): Stmt => {
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after exit.')
-        return new Exit()
-    }
-
     private block = (): Stmt[] => {
         let statements: Stmt[] = []
 
@@ -216,12 +246,6 @@ class Parser {
 
         this.consume(TokenType.RIGHT_BRACE, 'Expect \'}\' after block.')
         return statements
-    }
-
-    private printStatement = (): Stmt => {
-        const value: Expr = this.expression()
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after value.')
-        return new Print(value)
     }
 
     private varDeclaration = (): Stmt => {
@@ -233,16 +257,6 @@ class Parser {
         
         this.consume(TokenType.SEMICOLON, 'Expect \';\' after variable declaration.')
         return new Var(name, initializer)
-    }
-
-    private expressionStatement = (): Stmt => {
-        const expr: Expr = this.expression()
-
-        if (this.isRepl && this.peek().type !== TokenType.SEMICOLON)
-            return new Expression(expr)
-
-        this.consume(TokenType.SEMICOLON, 'Expect \';\' after expression.')
-        return new Expression(expr)
     }
 
     private function(kind: string): Function {
